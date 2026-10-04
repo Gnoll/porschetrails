@@ -1,0 +1,65 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import { brand } from "../../brand";
+import { garages } from "../../data/garages";
+import { regions } from "../../data/trails";
+
+const crumbs = [{ label: "Garages" }];
+const kinds = ["Official dealer", "Independent specialist"] as const;
+const titles = { "Official dealer": `Official ${brand.marque} dealers`, "Independent specialist": "Independent specialists" };
+const id = { "Official dealer": "dealers", "Independent specialist": "specialists" };
+const byCountry = (list: typeof garages) => [...new Set(list.map((g) => g.country))].sort().map((c) => ({ country: c, items: list.filter((g) => g.country === c).sort((a, b) => a.name.localeCompare(b.name)) }));
+const schema = [{
+  "@type": "ItemList",
+  name: `${brand.marque} dealers and independent specialists`,
+  numberOfItems: garages.length,
+  itemListElement: garages.map((g, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    item: { "@type": g.kind === "Official dealer" ? "AutoDealer" : "AutoRepair", name: g.name, url: g.url, address: { "@type": "PostalAddress", addressLocality: g.city, addressCountry: g.country }, geo: { "@type": "GeoCoordinates", latitude: g.lat, longitude: g.lng } },
+  })),
+}];
+---
+
+<Base
+  title={`${brand.marque} Dealers and Independent Specialists Worldwide`}
+  description={`A directory of official ${brand.marque} dealers and well-known independent ${brand.marque} specialists for servicing, repair and track preparation, by country.`}
+  crumbs={crumbs}
+  schema={schema}
+  markdown="/garages.md"
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>Dealers and specialists</h1>
+    <p class="lead">Where to buy, service and repair your {brand.marque}: official dealers, and the independent specialists that owners' clubs and forums mention most often.</p>
+    <ul class="pills" style="margin-top:1.4rem">
+      {kinds.map((k) => <li><a href={`#${id[k]}`}>{titles[k]}<small>{garages.filter((g) => g.kind === k).length}</small></a></li>)}
+      <li><a href="/map/?show=dealers,specialists">Show on the map</a></li>
+    </ul>
+  </div>
+  <div class="wrap">
+    {kinds.map((k) => (
+      <section id={id[k]} style="scroll-margin-top:5rem">
+        <h2>{titles[k]}</h2>
+        {regions.filter((r) => garages.some((g) => g.kind === k && g.region === r.name)).map((r) => (
+          <>
+            <h3 style="margin:1.8rem 0 .8rem">{r.name}</h3>
+            <ul class="grid wide">
+              {byCountry(garages.filter((g) => g.kind === k && g.region === r.name)).flatMap((c) => c.items).map((g) => (
+                <li class="card">
+                  <div class="card-body">
+                    <p class="eyebrow">{g.city} · {g.country}</p>
+                    <h3><a href={g.url} rel="noopener">{g.name}</a></h3>
+                    <p>{g.note}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        ))}
+      </section>
+    ))}
+    <p class="meta" style="margin-top:2rem">Listings are for information and are not endorsements or a complete list. Dealer networks change, so confirm with the business before you travel. Owners on the <a href="/communities/">forums and in the clubs</a> are the best source of current recommendations.</p>
+  </div>
+</Base>

@@ -1,0 +1,25 @@
+---
+import Base from "../layouts/Base.astro";
+import Crumbs from "../components/Crumbs.astro";
+import credits from "../data/credits.json";
+import { brand } from "../brand";
+const crumbs = [{ label: "Photo credits" }];
+const rows = Object.values(credits as Record<string, { title: string; artist: string; license: string; page: string }>).sort((a, b) => a.title.localeCompare(b.title));
+---
+
+<Base title="Photo Credits and Licences" description={`Attribution and licence details for every photograph used on ${brand.name}, sourced from Wikimedia Commons.`} crumbs={crumbs}>
+  <div class="narrow page-head">
+    <Crumbs items={crumbs} />
+    <h1>Photo credits</h1>
+    <p class="lead">Photographs on this site come from Wikimedia Commons and are used under the Creative Commons licences listed below. Images have been cropped and resized. A few illustrations, marked as such where they appear, are AI-generated.</p>
+  </div>
+  <div class="narrow prose">
+    <table>
+      <thead><tr><th>Photograph</th><th>Author</th><th>Licence</th></tr></thead>
+      <tbody>
+        {rows.map((c) => <tr><td><a href={c.page} rel="noopener nofollow">{c.title.replace(/\.(jpe?g)$/i, "")}</a></td><td>{c.artist}</td><td>{c.license}</td></tr>)}
+      </tbody>
+    </table>
+    <p>If you are the author of a photograph and would like the credit changed, the details on the linked Commons page are what we follow.</p>
+  </div>
+</Base>

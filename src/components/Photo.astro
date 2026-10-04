@@ -1,0 +1,37 @@
+---
+import { Picture } from "astro:assets";
+import { photo } from "../lib/images";
+
+interface Props {
+  slot: string;
+  alt: string;
+  /** "card" images are small; "wide" images span the content column; "hero" spans the viewport. */
+  kind?: "card" | "wide" | "hero";
+  eager?: boolean;
+}
+const { slot, alt, kind = "card", eager = false } = Astro.props;
+const { src } = photo(slot);
+const presets = {
+  card: { widths: [360, 540, 720], sizes: "(min-width: 72rem) 22rem, (min-width: 40rem) 45vw, 100vw", width: 720, ratio: 3 / 2 },
+  wide: { widths: [480, 800, 1200, 1600], sizes: "(min-width: 72rem) 70rem, 100vw", width: 1600, ratio: 16 / 9 },
+  hero: { widths: [640, 960, 1280, 1920], sizes: "100vw", width: 1920, ratio: 16 / 9 },
+}[kind];
+const widths = presets.widths.filter((w) => w <= src.width);
+const width = Math.min(presets.width, src.width);
+---
+
+<Picture
+  src={src}
+  alt={alt}
+  formats={["avif", "webp"]}
+  fallbackFormat="jpg"
+  widths={widths}
+  sizes={presets.sizes}
+  width={width}
+  height={Math.round(width / presets.ratio)}
+  fit="cover"
+  quality={52}
+  loading={eager ? "eager" : "lazy"}
+  fetchpriority={eager ? "high" : undefined}
+  decoding={eager ? "sync" : "async"}
+/>

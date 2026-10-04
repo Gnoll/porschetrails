@@ -1,0 +1,57 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import Credit from "../../components/Credit.astro";
+import { brand } from "../../brand";
+import { ogImage } from "../../lib/images";
+
+export async function getStaticPaths() {
+  const posts = (await getCollection("blog")).sort((a, b) => +b.data.date - +a.data.date);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post, posts } }));
+}
+const { post, posts } = Astro.props;
+const { Content } = await render(post);
+const crumbs = [{ label: "Blog", href: "/blog/" }, { label: post.data.title }];
+const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+const recent = posts.filter((p) => p.id !== post.id).slice(0, 6);
+const schema = [{
+  "@type": "BlogPosting",
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: post.data.date.toISOString(),
+  dateModified: post.data.date.toISOString(),
+  image: new URL(await ogImage(post.data.image), brand.url).href,
+  articleSection: post.data.category,
+  author: { "@id": `${brand.url}/#org` },
+  publisher: { "@id": `${brand.url}/#org` },
+  mainEntityOfPage: `${brand.url}/blog/${post.id}/`,
+}];
+---
+
+<Base title={post.data.title} description={post.data.description} image={post.data.image} type="article" crumbs={crumbs} schema={schema} published={post.data.date} markdown={`/blog/${post.id}.md`}>
+  <article>
+    <div class="narrow page-head">
+      <Crumbs items={crumbs} />
+      <p class="eyebrow">{post.data.category} · <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time></p>
+      <h1>{post.data.title}</h1>
+      <p class="lead">{post.data.description}</p>
+    </div>
+    <div class="wrap">
+      <figure class="figure">
+        <Photo slot={post.data.image} alt={post.data.imageAlt} kind="wide" eager />
+        <figcaption><Credit slot={post.data.image} /></figcaption>
+      </figure>
+    </div>
+    <div class="narrow prose" style="margin-top:1.5rem"><Content /></div>
+  </article>
+  <section class="section">
+    <div class="narrow">
+      <h2 style="margin-top:0">More from the blog</h2>
+      <ul class="linklist">
+        {recent.map((p) => <li><h3><a href={`/blog/${p.id}/`}>{p.data.title}</a></h3><p class="meta">{p.data.category} · {fmt(p.data.date)}</p></li>)}
+      </ul>
+    </div>
+  </section>
+</Base>

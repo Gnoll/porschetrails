@@ -1,0 +1,22 @@
+---
+import type { Trail } from "../data/types";
+import { kmToMiles } from "../data/trails";
+import Photo from "./Photo.astro";
+interface Props { trail: Trail; eager?: boolean }
+const { trail, eager = false } = Astro.props;
+const km = trail.lengthKm;
+---
+
+<li class="card">
+  <Photo slot={`trail-${trail.slug}`} alt={trail.imageAlt} eager={eager} />
+  <div class="card-body">
+    <p class="eyebrow">{trail.country}</p>
+    <h3><a href={`/trails/${trail.slug}/`}>{trail.name}</a></h3>
+    <p>{trail.aka}</p>
+    <ul class="chips">
+      <li class="key">{km % 1 ? km.toFixed(1) : km} km / {Math.round(kmToMiles(km))} mi</li>
+      {trail.summitM && <li>{trail.summitM.toLocaleString("en")} m</li>}
+      <li>{trail.tags[0]}</li>
+    </ul>
+  </div>
+</li>

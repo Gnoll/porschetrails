@@ -1,0 +1,35 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import { brand } from "../../brand";
+const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.data.order);
+const crumbs = [{ label: "Guides" }];
+---
+
+<Base
+  title={`${brand.marque} Guides: Road Trips, Track Mods, Buying and History`}
+  description={`Practical guides for ${brand.marque} owners: road trip preparation, track day modifications, buying advice, recalls, colours, company history and famous cars and drivers.`}
+  image={guides[0].data.image}
+  crumbs={crumbs}
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>Guides</h1>
+    <p class="lead">Preparation, modification, buying and background reading for {brand.marque} owners.</p>
+  </div>
+  <div class="wrap">
+    <ul class="grid wide">
+      {guides.map((g, i) => (
+        <li class="card">
+          <Photo slot={g.data.image} alt={g.data.imageAlt} eager={i < 2} />
+          <div class="card-body">
+            <h3><a href={`/guides/${g.id}/`}>{g.data.title}</a></h3>
+            <p>{g.data.summary}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>

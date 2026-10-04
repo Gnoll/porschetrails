@@ -1,0 +1,68 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import Credit from "../../components/Credit.astro";
+import { brand } from "../../brand";
+import { models } from "../../data/models";
+import type { Model } from "../../data/types";
+
+export function getStaticPaths() {
+  return models.map((model) => ({ params: { slug: model.slug }, props: { model } }));
+}
+const { model } = Astro.props as { model: Model };
+const crumbs = [{ label: "Models", href: "/models/" }, { label: model.name }];
+const others = models.filter((m) => m.slug !== model.slug);
+const schema = [{
+  "@type": "Article",
+  headline: `${model.name} (${model.years})`,
+  description: model.summary,
+  about: { "@type": "Car", name: model.name, manufacturer: { "@type": "Organization", name: brand.marque } },
+  author: { "@id": `${brand.url}/#org` },
+  publisher: { "@id": `${brand.url}/#org` },
+  mainEntityOfPage: `${brand.url}/models/${model.slug}/`,
+}];
+---
+
+<Base title={`${model.name} (${model.years}): Specs, Variants and Buying Notes`} description={model.summary} image={`model-${model.slug}`} type="article" crumbs={crumbs} schema={schema} markdown={`/models/${model.slug}.md`}>
+  <article>
+    <div class="wrap page-head">
+      <Crumbs items={crumbs} />
+      <p class="eyebrow">{model.type}</p>
+      <h1>{model.name}</h1>
+      <p class="lead">{model.years}</p>
+    </div>
+    <div class="wrap">
+      <figure class="figure">
+        <Photo slot={`model-${model.slug}`} alt={model.imageAlt} kind="wide" eager />
+        <figcaption><Credit slot={`model-${model.slug}`} /></figcaption>
+      </figure>
+      <dl class="spec">
+        <div><dt>Years</dt><dd>{model.years}</dd></div>
+        <div><dt>Engine</dt><dd>{model.engine}</dd></div>
+        <div><dt>Power</dt><dd>{model.power}</dd></div>
+        <div><dt>Weight</dt><dd>{model.weight}</dd></div>
+      </dl>
+      <div class="layout">
+        <div class="prose">
+          {model.body.map((p) => <p>{p}</p>)}
+          <h2>Variants</h2>
+          <table>
+            <thead><tr><th>Variant</th><th>Years</th><th>Notes</th></tr></thead>
+            <tbody>{model.variants.map((v) => <tr><td><strong>{v.name}</strong></td><td>{v.years}</td><td>{v.note}</td></tr>)}</tbody>
+          </table>
+          <h2>On a road trip</h2>
+          <p>{model.roadTrip}</p>
+          <div class="callout">
+            <h2>What to check</h2>
+            <ul>{model.watch.map((w) => <li>{w}</li>)}</ul>
+          </div>
+        </div>
+        <aside class="aside">
+          <h2>Other models</h2>
+          <ul>{others.map((m) => <li><a href={`/models/${m.slug}/`}>{m.name}</a><small>{m.years}</small></li>)}</ul>
+        </aside>
+      </div>
+    </div>
+  </article>
+</Base>

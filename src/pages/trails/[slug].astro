@@ -1,0 +1,138 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import Credit from "../../components/Credit.astro";
+import TrailCard from "../../components/TrailCard.astro";
+import { brand } from "../../brand";
+import { trails, regions, regionSlug, nearestTrails, kmToMiles, mToFeet } from "../../data/trails";
+import { events } from "../../data/events";
+import { ogImage } from "../../lib/images";
+import type { Trail } from "../../data/types";
+
+export function getStaticPaths() {
+  return [
+    ...trails.map((trail) => ({ params: { slug: trail.slug }, props: { trail } })),
+    ...regions.map((region) => ({ params: { slug: region.slug }, props: { region } })),
+  ];
+}
+
+const { trail, region } = Astro.props as { trail?: Trail; region?: (typeof regions)[number] };
+const num = (n: number) => Math.round(n).toLocaleString("en");
+const regionTrails = region ? trails.filter((t) => t.region === region.name) : [];
+const near = trail ? nearestTrails(trail) : [];
+const related = trail ? events.filter((e) => e.relatedTrail === trail.slug) : [];
+const km = trail?.lengthKm ?? 0;
+const crumbs = trail
+  ? [{ label: "Trails", href: "/trails/" }, { label: trail.region, href: `/trails/${regionSlug(trail.region)}/` }, { label: trail.name }]
+  : [{ label: "Trails", href: "/trails/" }, { label: region!.name }];
+const schema = trail
+  ? [{
+      "@type": ["TouristAttraction", "Place"],
+      name: trail.name,
+      alternateName: trail.aka,
+      description: trail.summary,
+      url: `${brand.url}/trails/${trail.slug}/`,
+      image: new URL(await ogImage(`trail-${trail.slug}`), brand.url).href,
+      geo: { "@type": "GeoCoordinates", latitude: trail.lat, longitude: trail.lng },
+      address: { "@type": "PostalAddress", addressCountry: trail.country },
+      isAccessibleForFree: trail.toll.startsWith("Free"),
+      touristType: "Driving enthusiasts",
+    }]
+  : [{
+      "@type": "ItemList",
+      name: `Best driving roads in ${region!.name}`,
+      itemListElement: regionTrails.map((t, i) => ({ "@type": "ListItem", position: i + 1, name: t.name, url: `${brand.url}/trails/${t.slug}/` })),
+    }];
+---
+
+{trail ? (
+  <Base title={`${trail.name}: Driving Guide for Your ${brand.marque}`} description={trail.summary} image={`trail-${trail.slug}`} type="article" crumbs={crumbs} schema={schema} markdown={`/trails/${trail.slug}.md`}>
+    <article>
+      <div class="wrap page-head">
+        <Crumbs items={crumbs} />
+        <p class="eyebrow">{trail.country} · {trail.tags.join(" · ")}</p>
+        <h1>{trail.name}</h1>
+        <p class="lead">{trail.aka}</p>
+      </div>
+      <div class="wrap">
+        <figure class="figure">
+          <Photo slot={`trail-${trail.slug}`} alt={trail.imageAlt} kind="wide" eager />
+          <figcaption><Credit slot={`trail-${trail.slug}`} /></figcaption>
+        </figure>
+        <dl class="spec">
+          <div><dt>Length</dt><dd>{km % 1 ? km.toFixed(1) : km} km<small>{num(kmToMiles(km))} miles</small></dd></div>
+          {trail.summitM && <div><dt>High point</dt><dd>{num(trail.summitM)} m<small>{num(mToFeet(trail.summitM))} ft</small></dd></div>}
+          <div><dt>Driving time</dt><dd>{trail.driveTime}</dd></div>
+          <div><dt>Season</dt><dd>{trail.season}</dd></div>
+          <div><dt>Toll</dt><dd>{trail.toll}</dd></div>
+          <div><dt>Country</dt><dd>{trail.country}</dd></div>
+        </dl>
+        <div class="layout">
+          <div class="prose">
+            <p>{trail.intro}</p>
+            <h2>The drive</h2>
+            {trail.drive.map((p) => <p>{p}</p>)}
+            <h2>In your {brand.marque}</h2>
+            <p>{trail.marque}</p>
+            <div class="callout">
+              <h2>Watch out for</h2>
+              <ul>{trail.watch.map((w) => <li>{w}</li>)}</ul>
+            </div>
+          </div>
+          <aside class="aside">
+            <h2>Find it</h2>
+            <ul>
+              <li>{trail.lat.toFixed(4)}, {trail.lng.toFixed(4)}<small>Coordinates of the key point on the route</small></li>
+              <li><a href={`https://www.google.com/maps/search/?api=1&query=${trail.lat},${trail.lng}`} rel="noopener">Open in Google Maps</a></li>
+              <li><a href={`https://www.openstreetmap.org/?mlat=${trail.lat}&mlon=${trail.lng}#map=11/${trail.lat}/${trail.lng}`} rel="noopener">Open in OpenStreetMap</a></li>
+            </ul>
+            {trail.links.length > 0 && (
+              <>
+                <h2>Official information</h2>
+                <ul>{trail.links.map((l) => <li><a href={l.url} rel="noopener">{l.label}</a></li>)}</ul>
+              </>
+            )}
+            {related.length > 0 && (
+              <>
+                <h2>Related events</h2>
+                <ul>{related.map((e) => <li><a href={`/events/#${e.slug}`}>{e.name}</a><small>{e.when}</small></li>)}</ul>
+              </>
+            )}
+            <h2>Plan the trip</h2>
+            <ul>
+              <li><a href="/guides/">Road trip and preparation guides</a></li>
+              <li><a href="/models/">Which model suits this road?</a></li>
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </article>
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head"><h2>Nearest trails</h2><a class="more" href={`/trails/${regionSlug(trail.region)}/`}>More in {trail.region} →</a></div>
+        <ul class="grid">{near.map((t) => <TrailCard trail={t} />)}</ul>
+      </div>
+    </section>
+  </Base>
+) : (
+  <Base
+    title={`Best Driving Roads in ${region!.name} for Your ${brand.marque}`}
+    description={`The best driving roads in ${region!.name} for your ${brand.marque}: ${regionTrails.slice(0, 4).map((t) => t.name).join(", ")} and more.`}
+    image={`trail-${regionTrails[0].slug}`}
+    crumbs={crumbs}
+    schema={schema}
+  >
+    <div class="wrap page-head">
+      <Crumbs items={crumbs} />
+      <h1>Driving roads in {region!.name}</h1>
+      <p class="lead">{region!.blurb}</p>
+    </div>
+    <div class="wrap">
+      <ul class="pills">
+        {regions.map((r) => <li><a href={`/trails/${r.slug}/`} aria-current={r.slug === region!.slug ? "page" : undefined}>{r.name}</a></li>)}
+      </ul>
+      <ul class="grid" style="margin-top:1.5rem">{regionTrails.map((t, i) => <TrailCard trail={t} eager={i < 3} />)}</ul>
+    </div>
+  </Base>
+)}

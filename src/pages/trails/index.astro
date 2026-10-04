@@ -1,0 +1,48 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import TrailCard from "../../components/TrailCard.astro";
+import { brand } from "../../brand";
+import { trails, regions } from "../../data/trails";
+
+const crumbs = [{ label: "Trails" }];
+const schema = [{
+  "@type": "ItemList",
+  name: `Best driving roads for your ${brand.marque}`,
+  numberOfItems: trails.length,
+  itemListElement: trails.map((t, i) => ({ "@type": "ListItem", position: i + 1, name: t.name, url: `${brand.url}/trails/${t.slug}/` })),
+}];
+---
+
+<Base
+  title={`Best Driving Roads in the World for Your ${brand.marque}`}
+  description={`${trails.length} of the world's best driving roads, with notes for ${brand.marque} owners: length, season, tolls, hazards and how each one drives.`}
+  crumbs={crumbs}
+  schema={schema}
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>The trails</h1>
+    <p class="lead">{trails.length} driving roads across {regions.length} regions, each written up for {brand.marque} owners.</p>
+  </div>
+  <div class="wrap">
+    <ul class="pills">
+      {regions.map((r) => (
+        <li><a href={`#${r.slug}`}>{r.name}<small>{trails.filter((t) => t.region === r.name).length}</small></a></li>
+      ))}
+    </ul>
+    {regions.map((r, ri) => (
+      <section id={r.slug} style="scroll-margin-top:5rem">
+        <div class="section-head" style="margin-top:2.6rem">
+          <div>
+            <h2><a href={`/trails/${r.slug}/`} style="color:inherit;text-decoration:none">{r.name}</a></h2>
+            <p>{r.blurb}</p>
+          </div>
+        </div>
+        <ul class="grid">
+          {trails.filter((t) => t.region === r.name).map((t, i) => <TrailCard trail={t} eager={ri === 0 && i === 0} />)}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>

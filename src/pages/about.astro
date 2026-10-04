@@ -1,0 +1,29 @@
+---
+import Base from "../layouts/Base.astro";
+import Crumbs from "../components/Crumbs.astro";
+import { brand } from "../brand";
+import { trails } from "../data/trails";
+const crumbs = [{ label: "About" }];
+---
+
+<Base title={`About ${brand.name}`} description={`${brand.name} is an independent guide to driving roads, events and ownership for ${brand.marque} enthusiasts. How the site is put together and how to use it.`} crumbs={crumbs}>
+  <div class="narrow page-head">
+    <Crumbs items={crumbs} />
+    <h1>About {brand.name}</h1>
+  </div>
+  <div class="narrow prose">
+    <p>{brand.name} is a guide to the roads that make owning a {brand.marque} worthwhile. It covers {trails.length} routes on six continents, the tarmac rallies and race series where these cars compete, the clubs and forums where owners gather, and the practical knowledge that makes a long trip go smoothly.</p>
+    <h2>How the road guides are written</h2>
+    <p>Every road is described from the driver's seat of a sports car: how tight the corners are, what the surface is like, whether a low nose will survive it, where fuel is, and when the traffic is lightest. Lengths, elevations and seasons are given as a planning aid. Mountain passes open and close with the weather, toll prices change, and landslides shut coastal roads for months, so each guide links to an official source where one exists.</p>
+    <h2>Driving responsibly</h2>
+    <p>These are public roads shared with residents, cyclists, walkers and wildlife. Nothing here is an invitation to break the law. The best of these roads are enjoyable at the speed limit, which is rather the point of a good driver's car. If you want to drive fast, the <a href="/events/">events page</a> lists track days and closed-road rallies that exist for exactly that.</p>
+    <h2>Photographs</h2>
+    <p>Photographs are from Wikimedia Commons under Creative Commons licences, with attribution on each page and a full list on the <a href="/credits/">credits page</a>. A small number of illustrations are AI-generated and are labelled where they appear.</p>
+    <h2>Independence</h2>
+    <p>{brand.disclaimer}</p>
+    <h2 id="contact">Contact</h2>
+    <p>Corrections, a road we have missed, a club, specialist or event that should be listed, or a photo credit that needs changing: write to <a href={`mailto:${brand.email}`}>{brand.email}</a>.</p>
+    <h2>For machines</h2>
+    <p>Every guide is also available as plain markdown, indexed at <a href="/llms.txt">/llms.txt</a>, and there is an <a href="/rss.xml">RSS feed</a> for the blog.</p>
+  </div>
+</Base>

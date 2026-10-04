@@ -1,0 +1,151 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import Photo from "../components/Photo.astro";
+import TrailCard from "../components/TrailCard.astro";
+import { brand } from "../brand";
+import { trails, regions, trailBySlug } from "../data/trails";
+import { models } from "../data/models";
+import { events } from "../data/events";
+import { featured } from "../data/featured";
+
+const picks = featured.trails.map((s) => trailBySlug(s)!);
+const posts = (await getCollection("blog")).sort((a, b) => +b.data.date - +a.data.date).slice(0, 3);
+const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.data.order).slice(0, 4);
+const countries = new Set(trails.map((t) => t.country)).size;
+const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+---
+
+<Base title={`${brand.name}: ${brand.tagline}`} description={brand.description}>
+  <section class="hero">
+    <Photo slot="hero-home" alt={featured.heroAlt} kind="hero" eager />
+    <div class="wrap">
+      <p class="eyebrow">{trails.length} roads · {countries} countries</p>
+      <h1>{brand.heroTitle}</h1>
+      <p class="lead">{brand.heroLead}</p>
+      <div class="cta-row">
+        <a class="btn" href="/trails/">Browse the trails</a>
+        <a class="btn ghost" href="/map/">Open the map</a>
+        <a class="btn ghost" href="/events/">Targas and events</a>
+      </div>
+      <ul class="stats">
+        <li><b>{trails.length}</b><span>Driving roads</span></li>
+        <li><b>{regions.length}</b><span>Regions</span></li>
+        <li><b>{events.length}</b><span>Events</span></li>
+        <li><b>{models.length}</b><span>Model guides</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Start here</p>
+          <h2>Roads worth the trip</h2>
+          <p>{featured.trailsBlurb}</p>
+        </div>
+        <a class="more" href="/trails/">All {trails.length} trails →</a>
+      </div>
+      <ul class="grid">
+        {picks.map((t) => <TrailCard trail={t} />)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">By region</p>
+          <h2>Find a road near you</h2>
+        </div>
+      </div>
+      <ul class="grid">
+        {regions.map((r) => {
+          const n = trails.filter((t) => t.region === r.name).length;
+          return (
+            <li class="card">
+              <div class="card-body">
+                <p class="eyebrow">{n} {n === 1 ? "trail" : "trails"}</p>
+                <h3><a href={`/trails/${r.slug}/`}>{r.name}</a></h3>
+                <p>{r.blurb}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">The cars</p>
+          <h2>{featured.modelsTitle}</h2>
+          <p>{featured.modelsBlurb}</p>
+        </div>
+        <a class="more" href="/models/">All model guides →</a>
+      </div>
+      <ul class="grid">
+        {featured.models.map((s) => models.find((m) => m.slug === s)!).map((m) => (
+          <li class="card">
+            <Photo slot={`model-${m.slug}`} alt={m.imageAlt} />
+            <div class="card-body">
+              <p class="eyebrow">{m.years}</p>
+              <h3><a href={`/models/${m.slug}/`}>{m.name}</a></h3>
+              <ul class="chips"><li class="key">{m.power}</li><li>{m.weight}</li></ul>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Know before you go</p>
+          <h2>Guides</h2>
+        </div>
+        <a class="more" href="/guides/">All guides →</a>
+      </div>
+      <ul class="grid">
+        {guides.map((g) => (
+          <li class="card">
+            <div class="card-body">
+              <h3><a href={`/guides/${g.id}/`}>{g.data.title}</a></h3>
+              <p>{g.data.summary}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Latest</p>
+          <h2>From the blog</h2>
+        </div>
+        <a class="more" href="/blog/">All posts →</a>
+      </div>
+      <ul class="grid wide">
+        {posts.map((p) => (
+          <li class="card">
+            <Photo slot={p.data.image} alt={p.data.imageAlt} />
+            <div class="card-body">
+              <p class="eyebrow">{p.data.category} · {fmt(p.data.date)}</p>
+              <h3><a href={`/blog/${p.id}/`}>{p.data.title}</a></h3>
+              <p>{p.data.description}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</Base>

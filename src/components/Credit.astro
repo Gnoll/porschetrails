@@ -1,0 +1,12 @@
+---
+import { photo } from "../lib/images";
+interface Props { slot: string }
+const { credit, generated } = photo(Astro.props.slot);
+---
+
+{credit && (
+  <span class="credit">
+    Photo: <a href={credit.page} rel="noopener nofollow">{credit.artist || "Wikimedia Commons"}</a>, {credit.license}, via Wikimedia Commons
+  </span>
+)}
+{generated && <span class="credit">Illustration: AI-generated, not a photograph of a real car or place</span>}

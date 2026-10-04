@@ -1,0 +1,37 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import { brand } from "../../brand";
+import { models } from "../../data/models";
+import { featured } from "../../data/featured";
+const crumbs = [{ label: "Models" }];
+---
+
+<Base
+  title={`${brand.marque} Model Guide: Years, Engines and Variants`}
+  description={`Model-by-model guide to every modern ${brand.marque} sports car: production years, engines, power, weight, variants and what to check when buying.`}
+  image={`model-${models[0].slug}`}
+  crumbs={crumbs}
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>{featured.modelsTitle}</h1>
+    <p class="lead">{featured.modelsBlurb}</p>
+  </div>
+  <div class="wrap">
+    <ul class="grid">
+      {models.map((m, i) => (
+        <li class="card">
+          <Photo slot={`model-${m.slug}`} alt={m.imageAlt} eager={i < 3} />
+          <div class="card-body">
+            <p class="eyebrow">{m.years}</p>
+            <h3><a href={`/models/${m.slug}/`}>{m.name}</a></h3>
+            <p>{m.engine}</p>
+            <ul class="chips"><li class="key">{m.power}</li><li>{m.weight}</li></ul>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>

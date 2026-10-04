@@ -1,0 +1,44 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import { brand } from "../../brand";
+const posts = (await getCollection("blog")).sort((a, b) => +b.data.date - +a.data.date);
+const crumbs = [{ label: "Blog" }];
+const fmt = (d: Date) => d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+const schema = [{
+  "@type": "Blog",
+  name: `${brand.name} blog`,
+  url: `${brand.url}/blog/`,
+  blogPost: posts.slice(0, 20).map((p) => ({ "@type": "BlogPosting", headline: p.data.title, url: `${brand.url}/blog/${p.id}/`, datePublished: p.data.date.toISOString() })),
+}];
+---
+
+<Base
+  title={`${brand.marque} News, Road Spotlights and Stories`}
+  description={`Daily notes for ${brand.marque} owners: event news, road spotlights, technical explainers and history from ${brand.name}.`}
+  image={posts[0].data.image}
+  crumbs={crumbs}
+  schema={schema}
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>Blog</h1>
+    <p class="lead">News, road spotlights, technical notes and history. A new post most days.</p>
+  </div>
+  <div class="wrap">
+    <ul class="grid wide">
+      {posts.map((p, i) => (
+        <li class="card">
+          <Photo slot={p.data.image} alt={p.data.imageAlt} eager={i < 2} />
+          <div class="card-body">
+            <p class="eyebrow">{p.data.category} · <time datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time></p>
+            <h3><a href={`/blog/${p.id}/`}>{p.data.title}</a></h3>
+            <p>{p.data.description}</p>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Base>

@@ -1,0 +1,79 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import { brand } from "../../brand";
+import { tracks } from "../../data/tracks";
+import { providers } from "../../data/trackday-providers";
+import { regions, kmToMiles } from "../../data/trails";
+
+const crumbs = [{ label: "Tracks" }];
+const used = regions.filter((r) => tracks.some((t) => t.region === r.name));
+const provRegions = regions.filter((r) => providers.some((p) => p.region === r.name));
+const schema = [{
+  "@type": "ItemList",
+  name: "Race circuits with public track days",
+  numberOfItems: tracks.length,
+  itemListElement: tracks.map((t, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    item: { "@type": "SportsActivityLocation", name: t.name, url: t.url, address: { "@type": "PostalAddress", addressLocality: t.city, addressCountry: t.country }, geo: { "@type": "GeoCoordinates", latitude: t.lat, longitude: t.lng } },
+  })),
+}];
+---
+
+<Base
+  title={`Race Tracks and Track Day Organisers for Your ${brand.marque}`}
+  description={`${tracks.length} circuits around the world where you can take your ${brand.marque} on track, and ${providers.length} track day organisers who run the days, with links to each.`}
+  crumbs={crumbs}
+  schema={schema}
+  markdown="/tracks.md"
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>Tracks and track days</h1>
+    <p class="lead">{tracks.length} circuits where a road car can get on track, and the organisers who run the days. A circuit is the right place to find out what your {brand.marque} can do.</p>
+    <ul class="pills" style="margin-top:1.4rem">
+      <li><a href="#organisers">Track day organisers<small>{providers.length}</small></a></li>
+      {used.map((r) => <li><a href={`#${r.slug}`}>{r.name}<small>{tracks.filter((t) => t.region === r.name).length}</small></a></li>)}
+      <li><a href="/map/?show=tracks">Show on the map</a></li>
+    </ul>
+  </div>
+  <div class="wrap">
+    {used.map((r) => (
+      <section id={r.slug} style="scroll-margin-top:5rem">
+        <h2>{r.name}</h2>
+        <ul class="grid wide" style="margin-top:1.2rem">
+          {tracks.filter((t) => t.region === r.name).map((t) => (
+            <li class="card" id={t.slug} style="scroll-margin-top:5rem">
+              <div class="card-body">
+                <p class="eyebrow">{t.city} · {t.country}</p>
+                <h3><a href={t.url} rel="noopener">{t.name}</a></h3>
+                <p>{t.note}</p>
+                <ul class="chips"><li class="key">{t.lengthKm} km / {kmToMiles(t.lengthKm).toFixed(1)} mi</li></ul>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+    <section id="organisers" style="scroll-margin-top:5rem">
+      <h2>Track day organisers</h2>
+      <p class="lead" style="margin:.6rem 0 0">Most circuits do not sell track time directly. These organisers hire the circuit and sell places on the day.</p>
+      {provRegions.map((r) => (
+        <>
+          <h3 style="margin-top:1.8rem">{r.name}</h3>
+          <ul class="linklist">
+            {providers.filter((p) => p.region === r.name).map((p) => (
+              <li>
+                <h3><a href={p.url} rel="noopener">{p.name}</a></h3>
+                <p class="meta">{p.where}{p.marqueOnly && ` · ${brand.marque} only`}</p>
+                <p>{p.note}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      ))}
+    </section>
+    <p class="meta" style="margin-top:2rem">Listings are for information and are not endorsements. Check noise limits, licence and helmet requirements with the organiser, and read your insurance policy before you book. See the <a href="/guides/track-day-modifications/">track preparation guide</a>.</p>
+  </div>
+</Base>

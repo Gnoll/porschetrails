@@ -1,0 +1,141 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import { brand } from "../../brand";
+import { trails } from "../../data/trails";
+import { tracks } from "../../data/tracks";
+import { garages } from "../../data/garages";
+import { events } from "../../data/events";
+
+const crumbs = [{ label: "Map" }];
+
+// One flat list of pins. `c` is the category key used by the filters.
+const layers = [
+  { key: "trails", label: "Driving roads", colour: "#e8a400" },
+  { key: "tracks", label: "Race tracks", colour: "#d6336c" },
+  { key: "events", label: "Events", colour: "#7048e8" },
+  { key: "dealers", label: "Official dealers", colour: "#1971c2" },
+  { key: "specialists", label: "Independent specialists", colour: "#2f9e44" },
+];
+const points = [
+  ...trails.map((t) => ({ c: "trails", n: t.name, s: `${t.country} · ${t.lengthKm} km`, d: t.aka, u: `/trails/${t.slug}/`, lat: t.lat, lng: t.lng })),
+  ...tracks.map((t) => ({ c: "tracks", n: t.name, s: `${t.city}, ${t.country} · ${t.lengthKm} km`, d: t.note, u: t.url, lat: t.lat, lng: t.lng })),
+  ...events.filter((e) => e.lat !== undefined).map((e) => ({ c: "events", n: e.name, s: `${e.where} · ${e.when}`, d: "", u: `/events/#${e.slug}`, lat: e.lat!, lng: e.lng! })),
+  ...garages.map((g) => ({ c: g.kind === "Official dealer" ? "dealers" : "specialists", n: g.name, s: `${g.city}, ${g.country}`, d: g.note, u: g.url, lat: g.lat, lng: g.lng })),
+];
+const count = (key: string) => points.filter((p) => p.c === key).length;
+const data = JSON.stringify({ layers, points }).replace(/</g, "\\u003c");
+---
+
+<Base
+  title={`World Map of Driving Roads, Tracks, Dealers and Specialists for Your ${brand.marque}`}
+  description={`An interactive world map for ${brand.marque} owners: ${count("trails")} driving roads, ${count("tracks")} race tracks, events, official dealers and independent specialists, with filters.`}
+  crumbs={crumbs}
+>
+  <div class="wrap page-head" style="padding-bottom:1rem">
+    <Crumbs items={crumbs} />
+    <h1>The map</h1>
+    <p class="lead">Every road, circuit, event, dealer and specialist on this site, on one map. Use the filters to show what you need.</p>
+  </div>
+  <div class="wrap">
+    <form class="map-filters" id="map-filters" aria-label="Map filters">
+      {layers.map((l) => (
+        <label>
+          <input type="checkbox" name="layer" value={l.key} checked />
+          <span class="dot" style={`background:${l.colour}`}></span>
+          {l.label} <small>{count(l.key)}</small>
+        </label>
+      ))}
+    </form>
+    <div id="map" role="application" aria-label={`World map of places for ${brand.marque} owners`}></div>
+    <noscript><p class="callout">The map needs JavaScript. Everything on it is also listed on the pages below.</p></noscript>
+    <ul class="pills" style="margin-top:1.4rem">
+      <li><a href="/trails/">All driving roads</a></li>
+      <li><a href="/tracks/">All tracks and track day organisers</a></li>
+      <li><a href="/events/">All events</a></li>
+      <li><a href="/garages/">All dealers and specialists</a></li>
+    </ul>
+    <p class="meta" style="margin-top:1rem">Pins mark a key point on each road and the town or address of each business. Map data © OpenStreetMap contributors.</p>
+  </div>
+  <script is:inline type="application/json" id="map-data" set:html={data}></script>
+</Base>
+
+<style is:global>
+  #map{height:min(72vh,46rem);min-height:24rem;border:1px solid var(--line);border-radius:1rem;background:var(--line);z-index:0}
+  .map-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.9rem}
+  .map-filters label{display:flex;align-items:center;gap:.45rem;padding:.4rem .8rem;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.9rem;font-weight:650;cursor:pointer}
+  .map-filters input{accent-color:var(--brand-2);margin:0}
+  .map-filters small{color:var(--muted);font-weight:600}
+  .map-filters .dot{width:.7rem;height:.7rem;border-radius:50%;border:1px solid rgb(0 0 0/.35)}
+  .leaflet-popup-content{font:400 .9rem/1.45 ui-sans-serif,system-ui,sans-serif;margin:.8rem 1rem}
+  .leaflet-popup-content b{display:block;font-size:1rem;line-height:1.25}
+  .leaflet-popup-content span{display:block;color:#56635c;font-size:.8rem;margin:.15rem 0 .35rem}
+  .leaflet-popup-content a{font-weight:700}
+</style>
+
+<script>
+  import L from "leaflet";
+  import "leaflet/dist/leaflet.css";
+
+  interface Point { c: string; n: string; s: string; d: string; u: string; lat: number; lng: number }
+  const { layers, points } = JSON.parse(document.getElementById("map-data")!.textContent!) as {
+    layers: { key: string; label: string; colour: string }[];
+    points: Point[];
+  };
+
+  const map = L.map("map", { preferCanvas: true, worldCopyJump: true, scrollWheelZoom: false }).setView([25, 10], 2);
+  // Scroll-wheel zoom only after the visitor clicks the map, so the page still scrolls past it.
+  map.once("focus", () => map.scrollWheelZoom.enable());
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  function popup(p: Point) {
+    const el = document.createElement("div");
+    const title = document.createElement("b");
+    title.textContent = p.n;
+    const sub = document.createElement("span");
+    sub.textContent = p.s;
+    el.append(title, sub);
+    if (p.d) el.append(document.createTextNode(p.d + " "));
+    const link = document.createElement("a");
+    link.href = p.u;
+    const external = p.u.startsWith("http");
+    link.textContent = external ? "Website" : "Read more";
+    if (external) link.rel = "noopener";
+    el.append(link);
+    return el;
+  }
+
+  const groups = new Map<string, L.FeatureGroup>();
+  for (const layer of layers) {
+    const group = L.featureGroup(
+      points
+        .filter((p) => p.c === layer.key)
+        .map((p) =>
+          L.circleMarker([p.lat, p.lng], { radius: 7, color: "#111", weight: 1, fillColor: layer.colour, fillOpacity: 0.9 })
+            .bindPopup(() => popup(p))
+            .bindTooltip(p.n),
+        ),
+    );
+    groups.set(layer.key, group);
+  }
+
+  const form = document.getElementById("map-filters") as HTMLFormElement;
+  const boxes = [...form.querySelectorAll<HTMLInputElement>("input[name=layer]")];
+  // /map/?show=tracks,dealers preselects layers.
+  const show = new URLSearchParams(location.search).get("show")?.split(",");
+  if (show) for (const b of boxes) b.checked = show.includes(b.value);
+
+  function apply(fit: boolean) {
+    const visible: L.FeatureGroup[] = [];
+    for (const b of boxes) {
+      const group = groups.get(b.value)!;
+      if (b.checked) { group.addTo(map); visible.push(group); } else group.remove();
+    }
+    if (fit && show && visible.length) map.fitBounds(L.featureGroup(visible).getBounds().pad(0.1), { maxZoom: 6 });
+  }
+  form.addEventListener("change", () => apply(false));
+  apply(true);
+</script>

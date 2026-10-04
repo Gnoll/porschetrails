@@ -1,0 +1,48 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import Credit from "../../components/Credit.astro";
+import { brand } from "../../brand";
+import { communities } from "../../data/communities";
+const crumbs = [{ label: "Communities" }];
+const kinds = ["Forum", "Club", "Track club", "Reference", "Specialist"] as const;
+const titles = { Forum: "Forums", Club: "Owners' clubs", "Track club": "Track and racing clubs", Reference: "Reference and history", Specialist: "Parts and specialists" };
+---
+
+<Base
+  title={`${brand.marque} Owners' Clubs, Forums and Communities Worldwide`}
+  description={`A directory of ${brand.marque} forums, owners' clubs, track day clubs and specialists around the world, for finding advice, parts and people to drive with.`}
+  image="community-meet"
+  crumbs={crumbs}
+  markdown="/communities.md"
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>Clubs, forums and specialists</h1>
+    <p class="lead">The quickest way to find a good road is to ask someone who lives near it. These are the communities where {brand.marque} owners share routes, fixes and trip plans.</p>
+  </div>
+  <div class="wrap">
+    <figure class="figure">
+      <Photo slot="community-meet" alt="A row of sports cars parked outside a mountain cafe" kind="wide" eager />
+      <figcaption><Credit slot="community-meet" /></figcaption>
+    </figure>
+  </div>
+  <div class="narrow">
+    {kinds.filter((k) => communities.some((c) => c.kind === k)).map((k) => (
+      <section>
+        <h2>{titles[k]}</h2>
+        <ul class="linklist">
+          {communities.filter((c) => c.kind === k).map((c) => (
+            <li>
+              <h3><a href={c.url} rel="noopener">{c.name}</a></h3>
+              <p class="meta">{c.where}</p>
+              <p>{c.note}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+    <p class="meta" style="margin-top:2rem">Listings are for information and are not endorsements. Know a club that should be here? It probably should; this list grows over time.</p>
+  </div>
+</Base>

@@ -1,0 +1,142 @@
+---
+import "../styles/global.css";
+import { brand } from "../brand";
+import { ogImage } from "../lib/images";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Image slot used for the social card. */
+  image?: string;
+  type?: "website" | "article";
+  crumbs?: { label: string; href?: string }[];
+  /** Extra JSON-LD objects for this page. */
+  schema?: Record<string, unknown>[];
+  published?: Date;
+  noindex?: boolean;
+  /** Path of the plain-markdown version of this page, if there is one. */
+  markdown?: string;
+}
+
+const { title, description, image = "hero-home", type = "website", crumbs = [], schema = [], published, noindex = false, markdown } = Astro.props;
+const canonical = new URL(Astro.url.pathname, brand.url).href;
+const fullTitle = Astro.url.pathname === "/" ? title : `${title} | ${brand.name}`;
+const og = new URL(await ogImage(image), brand.url).href;
+const path = Astro.url.pathname;
+
+const vars = (t: Record<string, string>) => Object.entries(t).map(([k, v]) => `--${k}:${v}`).join(";");
+const tokens = `:root{color-scheme:light dark;${vars(brand.colors.light)}}@media (prefers-color-scheme:dark){:root{${vars(brand.colors.dark)}}}`;
+
+const graph: Record<string, unknown>[] = [
+  { "@type": "WebSite", "@id": `${brand.url}/#website`, url: `${brand.url}/`, name: brand.name, description: brand.description, inLanguage: "en" },
+  { "@type": "Organization", "@id": `${brand.url}/#org`, name: brand.name, url: `${brand.url}/`, logo: `${brand.url}/icon-512.png`, email: brand.email },
+  ...(crumbs.length
+    ? [{
+        "@type": "BreadcrumbList",
+        itemListElement: [{ label: "Home", href: "/" }, ...crumbs].map((c, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: c.label,
+          item: new URL(c.href ?? path, brand.url).href,
+        })),
+      }]
+    : []),
+  ...schema,
+];
+const jsonLd = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c");
+---
+
+<!doctype html>
+<html lang={brand.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />}
+    <meta name="theme-color" content={brand.themeColor} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title={`${brand.name} blog`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    {markdown && <link rel="alternate" type="text/markdown" href={markdown} />}
+    <meta property="og:site_name" content={brand.name} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_GB" />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={og} />
+    <style is:inline set:html={tokens}></style>
+    <script is:inline type="application/ld+json" set:html={jsonLd}></script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="logo" href="/" aria-label={`${brand.name} home`}>
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="15" fill="var(--accent)"></circle>
+            <path d="M9 25c9 0 14-2 14-6s-12-2-12-6 5-6 12-6" fill="none" stroke="var(--brand)" stroke-width="3.2" stroke-linecap="round"></path>
+          </svg>
+          <span>{brand.marque} <span>Trails</span></span>
+        </a>
+        <nav class="nav" aria-label="Main">
+          {brand.nav.map((n) => <a href={n.href} aria-current={path.startsWith(n.href) ? "page" : undefined}>{n.label}</a>)}
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="foot-grid">
+          <div>
+            <h2>{brand.name}</h2>
+            <p>{brand.tagline}.</p>
+          </div>
+          <div>
+            <h2>Explore</h2>
+            <ul>
+              {brand.nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}
+            </ul>
+          </div>
+          <div>
+            <h2>Trails by region</h2>
+            <ul>
+              <li><a href="/trails/europe/">Europe</a></li>
+              <li><a href="/trails/north-america/">North America</a></li>
+              <li><a href="/trails/asia-middle-east/">Asia &amp; Middle East</a></li>
+              <li><a href="/trails/oceania/">Oceania</a></li>
+              <li><a href="/trails/africa/">Africa</a></li>
+              <li><a href="/trails/south-america/">South America</a></li>
+            </ul>
+          </div>
+          <div>
+            <h2>About</h2>
+            <ul>
+              <li><a href="/about/">About this site</a></li>
+              <li><a href={`mailto:${brand.email}`}>{brand.email}</a></li>
+              <li><a href="/credits/">Photo credits</a></li>
+              <li><a href="/rss.xml">RSS feed</a></li>
+              <li><a href="/sitemap-index.xml">Sitemap</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="fine">{brand.disclaimer} Road conditions, tolls, closures and event dates change. Check official sources before you travel, and drive within the law.</p>
+      </div>
+    </footer>
+  </body>
+</html>

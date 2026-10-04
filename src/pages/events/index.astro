@@ -1,0 +1,58 @@
+---
+import Base from "../../layouts/Base.astro";
+import Crumbs from "../../components/Crumbs.astro";
+import Photo from "../../components/Photo.astro";
+import Credit from "../../components/Credit.astro";
+import { brand } from "../../brand";
+import { events } from "../../data/events";
+import { trailBySlug } from "../../data/trails";
+
+const crumbs = [{ label: "Events" }];
+const kinds = [...new Set(events.map((e) => e.kind))];
+const id = (k: string) => k.toLowerCase().replace(/[^a-z]+/g, "-");
+const schema = [{
+  "@type": "ItemList",
+  name: `Targa rallies, race series and events for ${brand.marque} owners`,
+  itemListElement: events.map((e, i) => ({ "@type": "ListItem", position: i + 1, name: e.name, url: `${brand.url}/events/#${e.slug}` })),
+}];
+---
+
+<Base
+  title={`Targa Rallies, Race Series and Events for ${brand.marque} Owners`}
+  description={`Targa Tasmania, Targa Newfoundland, Targa Florio and more: the tarmac rallies, one-make race series, track days and gatherings worth knowing as a ${brand.marque} owner.`}
+  image={events.find((e) => e.image)?.image}
+  crumbs={crumbs}
+  schema={schema}
+  markdown="/events.md"
+>
+  <div class="wrap page-head">
+    <Crumbs items={crumbs} />
+    <h1>Targas, races and gatherings</h1>
+    <p class="lead">Closed-road tarmac rallies, one-make race series, hill climbs and owner gatherings around the world. Dates move every year, so each entry links to the organiser.</p>
+    <ul class="pills" style="margin-top:1.4rem">{kinds.map((k) => <li><a href={`#${id(k)}`}>{k}</a></li>)}</ul>
+  </div>
+  {kinds.map((k) => (
+    <section class="wrap" id={id(k)} style="scroll-margin-top:5rem">
+      <h2>{k}</h2>
+      <ul class="grid wide" style="margin-top:1.2rem">
+        {events.filter((e) => e.kind === k).map((e) => (
+          <li class="card" id={e.slug} style="scroll-margin-top:5rem">
+            {e.image && <Photo slot={e.image} alt={e.imageAlt ?? e.name} />}
+            <div class="card-body">
+              <p class="eyebrow">{e.where}</p>
+              <h3>{e.name}</h3>
+              <ul class="chips" style="margin:0 0 .4rem"><li class="key">{e.when}</li></ul>
+              <p>{e.summary}</p>
+              <p><strong style="color:var(--ink)">For {brand.marque} owners:</strong> {e.marque}</p>
+              <p style="margin-top:auto;padding-top:.6rem;position:relative;z-index:1">
+                <a href={e.url} rel="noopener">{e.urlLabel ?? "Official site"}</a>
+                {e.relatedTrail && <> · <a href={`/trails/${e.relatedTrail}/`}>Drive it: {trailBySlug(e.relatedTrail)!.name}</a></>}
+              </p>
+              {e.image && <Credit slot={e.image} />}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</Base>
