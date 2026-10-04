@@ -11,5 +11,5 @@ done
 rsync -a src/content.config.ts "$dest/src/"
 rsync -a src/data/types.ts "$dest/src/data/"
 rsync -a astro.config.mjs tsconfig.json .gitignore "$dest/"
-rsync -a scripts/cf.mjs scripts/deploy.mjs scripts/cloudflare-setup.mjs scripts/fetch-images.mjs scripts/add-image.mjs scripts/generate-image.mjs scripts/daily-post.md scripts/daily-post.sh scripts/sync-theme.sh scripts/markdown-pages.mjs "$dest/scripts/"
+rsync -a scripts/cf.mjs scripts/deploy.mjs scripts/cloudflare-setup.mjs scripts/fetch-images.mjs scripts/add-image.mjs scripts/generate-image.mjs scripts/daily-post.md scripts/daily-post.sh scripts/install-daily-post.sh scripts/sync-theme.sh scripts/markdown-pages.mjs "$dest/scripts/"
 echo "Synced theme to $dest"

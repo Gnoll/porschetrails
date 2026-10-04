@@ -19,7 +19,8 @@ Read `src/brand.ts` to see which site and marque this is. Today's date comes fro
    `image` is a slot name: a file in `src/assets/photos/` or `src/assets/generated/` without its extension. Reuse an existing slot that genuinely fits. If nothing fits, add a Wikimedia Commons photo with `node scripts/add-image.mjs <slot> "File:Exact title.jpg"` then `node scripts/fetch-images.mjs`, and open the downloaded file to confirm it shows what the alt text says.
 5. Body: 350 to 500 words, two to five `##` headings, at least two internal links (`/trails/<slug>/`, `/models/<slug>/`, `/guides/<slug>/`, `/events/`) that exist.
 6. Run `bunx astro build`. Fix any error. Then run `node scripts/deploy.mjs`.
-7. Report the title, the URL and the sources used.
+7. Commit only the files you added or changed with `git add` and `git commit -m "Blog: <post title>"`, then `git push`. If the push fails, say so and carry on; the post is already live.
+8. Report the title, the URL and the sources used.
 
 ## Rules
 
