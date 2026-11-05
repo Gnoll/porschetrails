@@ -1,5 +1,5 @@
 ---
-title: "Auto Zürich 2026: The GT3 Bergsport and Six Classic 911s on Show"
+title: "Auto Zürich 2026: The GT3 Bergsport and a Hall of Classic Porsches"
 description: "Auto Zürich runs from 5 to 8 November. Porsche Schweiz is showing the Alpine-only 911 GT3 Bergsport, the Cayenne Electric and a hall of classic cars."
 date: 2026-11-05
 image: model-911-992-gt3
